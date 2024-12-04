@@ -6,14 +6,12 @@ $summary = $_SESSION['summary'];
 $quiz_level = 'medium';
 $questions = fetchQuestions($summary, $quiz_level);
 
-if (is_array($questions) && !empty($questions)) {
-    $_SESSION['questions'] = json_encode($questions);
-    $_SESSION['correct_answers'] = array_column($questions, 'correct');
-} else {
-    $_SESSION['questions'] = json_encode([]);
-    $_SESSION['correct_answers'] = [];
-    $questions = [];
+while (!is_array($questions) || empty($questions)) {
+    $questions = fetchQuestions($summary, $quiz_level);
 }
+
+$_SESSION['questions'] = json_encode($questions);
+$_SESSION['correct_answers'] = array_column($questions, 'correct');
 ?>
 
 <!DOCTYPE html>
@@ -229,26 +227,22 @@ if (is_array($questions) && !empty($questions)) {
             </div>
             
             <?php
-            if (!empty($questions)) {
-                foreach ($questions as $index => $question) {
-                    echo '<div class="question-area" id="question_' . $index . '" style="display: ' . ($index === 0 ? 'block' : 'none') . ';">';
-                    echo '<div class="question-header">';
-                    echo '<div class="points">+1 points</div>';
-                    echo '<div class="multiple-choice">Multiple Choice</div>';
-                    echo '</div>';
-                    echo '<div class="question">' . $question['mcq'] . '</div>';
-                    echo '<div class="options">';
-                    foreach ($question['options'] as $key => $option) {
-                        echo '<div class="option">';
-                        echo '<input type="radio" id="q' . $index . 'o' . $key . '" name="question_' . $index . '" value="' . $key . '">';
-                        echo '<label class="option-label" for="q' . $index . 'o' . $key . '">' . $option . '</label>';
-                        echo '</div>';
-                    }
-                    echo '</div>';
+            foreach ($questions as $index => $question) {
+                echo '<div class="question-area" id="question_' . $index . '" style="display: ' . ($index === 0 ? 'block' : 'none') . ';">';
+                echo '<div class="question-header">';
+                echo '<div class="points">+1 points</div>';
+                echo '<div class="multiple-choice">Multiple Choice</div>';
+                echo '</div>';
+                echo '<div class="question">' . $question['mcq'] . '</div>';
+                echo '<div class="options">';
+                foreach ($question['options'] as $key => $option) {
+                    echo '<div class="option">';
+                    echo '<input type="radio" id="q' . $index . 'o' . $key . '" name="question_' . $index . '" value="' . $key . '">';
+                    echo '<label class="option-label" for="q' . $index . 'o' . $key . '">' . $option . '</label>';
                     echo '</div>';
                 }
-            } else {
-                echo '<p>No questions available. Please try again later.</p>';
+                echo '</div>';
+                echo '</div>';
             }
             ?>
 
