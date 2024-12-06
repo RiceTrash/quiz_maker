@@ -1,12 +1,19 @@
 <?php
 
 require __DIR__ . '/vendor/autoload.php'; // remove this line if you use a PHP Framework.
-
+use Dotenv\Dotenv as Dotenv;
 use Orhanerday\OpenAi\OpenAi;
 
 // Initialize OpenAI with your API key
-$open_ai_key = getenv('OPENAI_API_KEY');
-$open_ai = new OpenAi('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');
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+$open_ai_key = $_ENV['OPENAI_API_KEY'];
+if (!$open_ai_key) {
+    die('Error: OPENAI_API_KEY is not set in the .env file.');
+}
+
+$open_ai = new OpenAi($open_ai_key);
 
 // Function to get OpenAI response
 function getOpenAIResponse($prompt) {
@@ -30,7 +37,11 @@ function getOpenAIResponse($prompt) {
     ]);
 
     $response = json_decode($chat);
-    return $response->choices[0]->message->content;
+    if (isset($response->choices[0]->message->content)) {
+        return $response->choices[0]->message->content;
+    } else {
+        return "Error: Unable to get response from OpenAI.";
+    }
 }
 
 // Function to get OpenAI summary
@@ -55,7 +66,11 @@ function getOpenAISummary($text) {
     ]);
 
     $response = json_decode($chat);
-    return nl2br($response->choices[0]->message->content);
+    if (isset($response->choices[0]->message->content)) {
+        return nl2br($response->choices[0]->message->content);
+    } else {
+        return "Error: Unable to get summary from OpenAI.";
+    }
 }
 
 // Function to generate multiple choice questions
@@ -162,14 +177,17 @@ function fetchQuestions($text_content, $quiz_level) {
     ]);
 
     $response = json_decode($chat);
-    $extracted_response = $response->choices[0]->message->content;
+    if (isset($response->choices[0]->message->content)) {
+        $extracted_response = $response->choices[0]->message->content;
+        $mcqs = json_decode($extracted_response, true)['mcqs'] ?? null;
 
-    $mcqs = json_decode($extracted_response, true)['mcqs'] ?? null;
-
-    if (is_array($mcqs)) {
-        return $mcqs;
+        if (is_array($mcqs)) {
+            return $mcqs;
+        } else {
+            return [];
+        }
     } else {
-        return [];
+        return "Error: Unable to fetch questions from OpenAI.";
     }
 }
 
